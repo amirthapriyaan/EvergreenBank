@@ -1,0 +1,1346 @@
+{
+  "info": {
+    "_postman_id": "acd402fd-ec3d-4f5b-9a42-27b1596fcb8d",
+    "name": "Evergreen Bank - Firebase REST API",
+    "description": "Firebase Authentication REST and Cloud Firestore REST templates for Evergreen Bank. No Firebase SDK and no Realtime Database. Requests are templates; do not execute placeholder writes or create fake records. See README in the ZIP.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "01 - Firebase Authentication REST",
+      "item": [
+        {
+          "name": "Sign in with email and password",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key={{apiKey}}",
+            "description": "Returns idToken, refreshToken and localId. Store these only in the Postman environment for testing.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{email}}\",\n  \"password\": \"{{password}}\",\n  \"returnSecureToken\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create Auth user (optional - customer registration test)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "https://identitytoolkit.googleapis.com/v1/accounts:signUp?key={{apiKey}}",
+            "description": "Optional test only. This creates an Authentication identity, not a Firestore user profile or KYC record.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{newCustomerEmail}}\",\n  \"password\": \"{{newCustomerPassword}}\",\n  \"returnSecureToken\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Refresh ID token",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "https://securetoken.googleapis.com/v1/token?key={{apiKey}}",
+            "description": "Refreshes an expired Firebase Auth ID token.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"grant_type\": \"refresh_token\",\n  \"refresh_token\": \"{{refreshToken}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Send password reset email",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "https://identitytoolkit.googleapis.com/v1/accounts:sendOobCode?key={{apiKey}}",
+            "description": "Sends a password reset email.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"requestType\": \"PASSWORD_RESET\",\n  \"email\": \"{{email}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "02 - Cloud Firestore REST - Document templates",
+      "item": [
+        {
+          "name": "Create template document - users",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{idToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{firestoreBaseUrl}}/users?documentId={{uid}}",
+              "host": [
+                "{{firestoreBaseUrl}}"
+              ],
+              "path": [
+                "users"
+              ],
+              "query": [
+                {
+                  "key": "documentId",
+                  "value": "{{uid}}"
+                }
+              ]
+            },
+            "description": "PDF-required fields retained. Firebase Authentication owns the password; do not put a Firebase password or invented hash in this field. Confirm with mentor how this PDF field is to be represented.\n\nThis request is intentionally a placeholder template. Replace all {{...}} values and execute only when creating a real, authorized record. Creating the first document creates the collection.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fields\": {\n    \"uid\": {\n      \"stringValue\": \"{{uid}}\"\n    },\n    \"bankId\": {\n      \"stringValue\": \"P675\"\n    },\n    \"fullName\": {\n      \"stringValue\": \"{{REPLACE_ME}}\"\n    },\n    \"email\": {\n      \"stringValue\": \"{{email}}\"\n    },\n    \"passwordHash\": {\n      \"stringValue\": \"{{DO_NOT_STORE_FIREBASE_PASSWORD_OR_HASH_HERE}}\"\n    },\n    \"role\": {\n      \"stringValue\": \"CUSTOMER\"\n    },\n    \"status\": {\n      \"stringValue\": \"PENDING\"\n    }\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create template document - sessions",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{idToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{firestoreBaseUrl}}/sessions?documentId={{sessionHash}}",
+              "host": [
+                "{{firestoreBaseUrl}}"
+              ],
+              "path": [
+                "sessions"
+              ],
+              "query": [
+                {
+                  "key": "documentId",
+                  "value": "{{sessionHash}}"
+                }
+              ]
+            },
+            "description": "Opaque server sessions. Do not create these from browser code; backend only.\n\nThis request is intentionally a placeholder template. Replace all {{...}} values and execute only when creating a real, authorized record. Creating the first document creates the collection.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fields\": {\n    \"uid\": {\n      \"stringValue\": \"{{uid}}\"\n    },\n    \"csrfHash\": {\n      \"stringValue\": \"{{REPLACE_ME}}\"\n    },\n    \"expiresAt\": {\n      \"timestampValue\": \"2026-11-24T00:00:00Z\"\n    },\n    \"revokedAt\": {\n      \"nullValue\": null\n    }\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create template document - kyc_requests",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{idToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{firestoreBaseUrl}}/kyc_requests?documentId={{requestId}}",
+              "host": [
+                "{{firestoreBaseUrl}}"
+              ],
+              "path": [
+                "kyc_requests"
+              ],
+              "query": [
+                {
+                  "key": "documentId",
+                  "value": "{{requestId}}"
+                }
+              ]
+            },
+            "description": "documentPaths are Cloud Storage object paths, not public URLs.\n\nThis request is intentionally a placeholder template. Replace all {{...}} values and execute only when creating a real, authorized record. Creating the first document creates the collection.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fields\": {\n    \"uid\": {\n      \"stringValue\": \"{{uid}}\"\n    },\n    \"documentPaths\": {\n      \"arrayValue\": {\n        \"values\": [\n          {\n            \"stringValue\": \"{{storageObjectPath}}\"\n          }\n        ]\n      }\n    },\n    \"openingDepositMinor\": {\n      \"integerValue\": \"100000\"\n    },\n    \"status\": {\n      \"stringValue\": \"PENDING\"\n    },\n    \"reviewedBy\": {\n      \"nullValue\": null\n    }\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create template document - accounts",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{idToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{firestoreBaseUrl}}/accounts?documentId={{accountId}}",
+              "host": [
+                "{{firestoreBaseUrl}}"
+              ],
+              "path": [
+                "accounts"
+              ],
+              "query": [
+                {
+                  "key": "documentId",
+                  "value": "{{accountId}}"
+                }
+              ]
+            },
+            "description": "Balances are integer paise. Never create or modify financial records from an untrusted client.\n\nThis request is intentionally a placeholder template. Replace all {{...}} values and execute only when creating a real, authorized record. Creating the first document creates the collection.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fields\": {\n    \"accountId\": {\n      \"stringValue\": \"{{accountId}}\"\n    },\n    \"customerUid\": {\n      \"stringValue\": \"{{uid}}\"\n    },\n    \"accountNumber\": {\n      \"stringValue\": \"{{REPLACE_ME}}\"\n    },\n    \"currency\": {\n      \"stringValue\": \"INR\"\n    },\n    \"status\": {\n      \"stringValue\": \"PENDING\"\n    },\n    \"postedBalanceMinor\": {\n      \"integerValue\": \"0\"\n    },\n    \"heldMinor\": {\n      \"integerValue\": \"0\"\n    }\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create template document - beneficiaries",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{idToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{firestoreBaseUrl}}/beneficiaries?documentId={{beneficiaryId}}",
+              "host": [
+                "{{firestoreBaseUrl}}"
+              ],
+              "path": [
+                "beneficiaries"
+              ],
+              "query": [
+                {
+                  "key": "documentId",
+                  "value": "{{beneficiaryId}}"
+                }
+              ]
+            },
+            "description": "Beneficiary name may be added as an agreed UI-supporting field later.\n\nThis request is intentionally a placeholder template. Replace all {{...}} values and execute only when creating a real, authorized record. Creating the first document creates the collection.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fields\": {\n    \"uid\": {\n      \"stringValue\": \"{{uid}}\"\n    },\n    \"beneficiaryBankId\": {\n      \"stringValue\": \"{{REPLACE_ME}}\"\n    },\n    \"beneficiaryIfsc\": {\n      \"stringValue\": \"{{REPLACE_ME}}\"\n    },\n    \"beneficiaryAccountNumber\": {\n      \"stringValue\": \"{{REPLACE_ME}}\"\n    }\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create template document - transfers",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{idToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{firestoreBaseUrl}}/transfers?documentId={{transferId}}",
+              "host": [
+                "{{firestoreBaseUrl}}"
+              ],
+              "path": [
+                "transfers"
+              ],
+              "query": [
+                {
+                  "key": "documentId",
+                  "value": "{{transferId}}"
+                }
+              ]
+            },
+            "description": "PDF required names and sample-document names are both shown. This is a schema template, not a final transfer payload. Resolve the canonical naming with the mentor before transfer implementation.\n\nThis request is intentionally a placeholder template. Replace all {{...}} values and execute only when creating a real, authorized record. Creating the first document creates the collection.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fields\": {\n    \"fromAccountId\": {\n      \"stringValue\": \"{{REPLACE_ME}}\"\n    },\n    \"toAccountId\": {\n      \"stringValue\": \"{{INTERNAL_ONLY_OR_EMPTY}}\"\n    },\n    \"destinationIfsc\": {\n      \"stringValue\": \"{{INTERBANK_ONLY_OR_EMPTY}}\"\n    },\n    \"amountMinor\": {\n      \"integerValue\": \"0\"\n    },\n    \"status\": {\n      \"stringValue\": \"PENDING\"\n    },\n    \"idempotencyKey\": {\n      \"stringValue\": \"{{REPLACE_ME}}\"\n    },\n    \"transferId\": {\n      \"stringValue\": \"{{transferId}}\"\n    },\n    \"type\": {\n      \"stringValue\": \"INTERNAL\"\n    },\n    \"sourceAccountId\": {\n      \"stringValue\": \"{{REPLACE_ME}}\"\n    },\n    \"destinationAccountId\": {\n      \"stringValue\": \"{{REPLACE_ME}}\"\n    },\n    \"currency\": {\n      \"stringValue\": \"INR\"\n    },\n    \"requestedByUid\": {\n      \"stringValue\": \"{{uid}}\"\n    }\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create template document - ledger_entries",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{idToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{firestoreBaseUrl}}/ledger_entries?documentId={{entryId}}",
+              "host": [
+                "{{firestoreBaseUrl}}"
+              ],
+              "path": [
+                "ledger_entries"
+              ],
+              "query": [
+                {
+                  "key": "documentId",
+                  "value": "{{entryId}}"
+                }
+              ]
+            },
+            "description": "Append-only ledger entry. Created only by trusted backend/switch integration.\n\nThis request is intentionally a placeholder template. Replace all {{...}} values and execute only when creating a real, authorized record. Creating the first document creates the collection.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fields\": {\n    \"transferId\": {\n      \"stringValue\": \"{{REPLACE_ME}}\"\n    },\n    \"accountId\": {\n      \"stringValue\": \"{{REPLACE_ME}}\"\n    },\n    \"direction\": {\n      \"stringValue\": \"DEBIT\"\n    },\n    \"amountMinor\": {\n      \"integerValue\": \"0\"\n    },\n    \"postedAt\": {\n      \"timestampValue\": \"2026-11-24T00:00:00Z\"\n    }\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create template document - transfer_limits",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{idToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{firestoreBaseUrl}}/transfer_limits?documentId={{accountId}}",
+              "host": [
+                "{{firestoreBaseUrl}}"
+              ],
+              "path": [
+                "transfer_limits"
+              ],
+              "query": [
+                {
+                  "key": "documentId",
+                  "value": "{{accountId}}"
+                }
+              ]
+            },
+            "description": "Admin-managed limits.\n\nThis request is intentionally a placeholder template. Replace all {{...}} values and execute only when creating a real, authorized record. Creating the first document creates the collection.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fields\": {\n    \"perTransferMinor\": {\n      \"integerValue\": \"0\"\n    },\n    \"dailyMinor\": {\n      \"integerValue\": \"0\"\n    },\n    \"updatedBy\": {\n      \"stringValue\": \"{{adminUid}}\"\n    }\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create template document - daily_usage",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{idToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{firestoreBaseUrl}}/daily_usage?documentId={{accountId_date}}",
+              "host": [
+                "{{firestoreBaseUrl}}"
+              ],
+              "path": [
+                "daily_usage"
+              ],
+              "query": [
+                {
+                  "key": "documentId",
+                  "value": "{{accountId_date}}"
+                }
+              ]
+            },
+            "description": "Document ID format: accountId_YYYY-MM-DD.\n\nThis request is intentionally a placeholder template. Replace all {{...}} values and execute only when creating a real, authorized record. Creating the first document creates the collection.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fields\": {\n    \"accountId\": {\n      \"stringValue\": \"{{REPLACE_ME}}\"\n    },\n    \"dateIST\": {\n      \"stringValue\": \"YYYY-MM-DD\"\n    },\n    \"usedMinor\": {\n      \"integerValue\": \"0\"\n    }\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create template document - idempotency_keys",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{idToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{firestoreBaseUrl}}/idempotency_keys?documentId={{scopeKey}}",
+              "host": [
+                "{{firestoreBaseUrl}}"
+              ],
+              "path": [
+                "idempotency_keys"
+              ],
+              "query": [
+                {
+                  "key": "documentId",
+                  "value": "{{scopeKey}}"
+                }
+              ]
+            },
+            "description": "Prevents duplicate processing. Backend only.\n\nThis request is intentionally a placeholder template. Replace all {{...}} values and execute only when creating a real, authorized record. Creating the first document creates the collection.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fields\": {\n    \"requestHash\": {\n      \"stringValue\": \"{{REPLACE_ME}}\"\n    },\n    \"transferId\": {\n      \"stringValue\": \"{{REPLACE_ME}}\"\n    },\n    \"uid\": {\n      \"stringValue\": \"{{uid}}\"\n    }\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create template document - interbank_inbox",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{idToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{firestoreBaseUrl}}/interbank_inbox?documentId={{sourceTransferId}}",
+              "host": [
+                "{{firestoreBaseUrl}}"
+              ],
+              "path": [
+                "interbank_inbox"
+              ],
+              "query": [
+                {
+                  "key": "documentId",
+                  "value": "{{sourceTransferId}}"
+                }
+              ]
+            },
+            "description": "Receiver-bank idempotency/inbox record. Do not populate manually for test setup.\n\nThis request is intentionally a placeholder template. Replace all {{...}} values and execute only when creating a real, authorized record. Creating the first document creates the collection.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fields\": {\n    \"sourceBankId\": {\n      \"stringValue\": \"{{REPLACE_ME}}\"\n    },\n    \"destinationAccountId\": {\n      \"stringValue\": \"{{REPLACE_ME}}\"\n    },\n    \"status\": {\n      \"stringValue\": \"PENDING\"\n    }\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create template document - loans",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{idToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{firestoreBaseUrl}}/loans?documentId={{loanId}}",
+              "host": [
+                "{{firestoreBaseUrl}}"
+              ],
+              "path": [
+                "loans"
+              ],
+              "query": [
+                {
+                  "key": "documentId",
+                  "value": "{{loanId}}"
+                }
+              ]
+            },
+            "description": "Loan application record.\n\nThis request is intentionally a placeholder template. Replace all {{...}} values and execute only when creating a real, authorized record. Creating the first document creates the collection.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fields\": {\n    \"uid\": {\n      \"stringValue\": \"{{uid}}\"\n    },\n    \"accountId\": {\n      \"stringValue\": \"{{REPLACE_ME}}\"\n    },\n    \"requestedMinor\": {\n      \"integerValue\": \"0\"\n    },\n    \"status\": {\n      \"stringValue\": \"PENDING\"\n    }\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create template document - portfolios",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{idToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{firestoreBaseUrl}}/portfolios?documentId={{uid}}",
+              "host": [
+                "{{firestoreBaseUrl}}"
+              ],
+              "path": [
+                "portfolios"
+              ],
+              "query": [
+                {
+                  "key": "documentId",
+                  "value": "{{uid}}"
+                }
+              ]
+            },
+            "description": "One portfolio summary per user.\n\nThis request is intentionally a placeholder template. Replace all {{...}} values and execute only when creating a real, authorized record. Creating the first document creates the collection.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fields\": {\n    \"uid\": {\n      \"stringValue\": \"{{uid}}\"\n    },\n    \"accountIds\": {\n      \"arrayValue\": {\n        \"values\": []\n      }\n    },\n    \"loanIds\": {\n      \"arrayValue\": {\n        \"values\": []\n      }\n    }\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create template document - notification_outbox",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{idToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{firestoreBaseUrl}}/notification_outbox?documentId={{eventId}}",
+              "host": [
+                "{{firestoreBaseUrl}}"
+              ],
+              "path": [
+                "notification_outbox"
+              ],
+              "query": [
+                {
+                  "key": "documentId",
+                  "value": "{{eventId}}"
+                }
+              ]
+            },
+            "description": "Email worker/outbox record.\n\nThis request is intentionally a placeholder template. Replace all {{...}} values and execute only when creating a real, authorized record. Creating the first document creates the collection.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fields\": {\n    \"type\": {\n      \"stringValue\": \"{{REPLACE_ME}}\"\n    },\n    \"uid\": {\n      \"stringValue\": \"{{uid}}\"\n    },\n    \"email\": {\n      \"stringValue\": \"{{email}}\"\n    },\n    \"status\": {\n      \"stringValue\": \"PENDING\"\n    }\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create template document - audit_logs",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{idToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{firestoreBaseUrl}}/audit_logs?documentId={{logid}}",
+              "host": [
+                "{{firestoreBaseUrl}}"
+              ],
+              "path": [
+                "audit_logs"
+              ],
+              "query": [
+                {
+                  "key": "documentId",
+                  "value": "{{logid}}"
+                }
+              ]
+            },
+            "description": "Audit entries should be written by trusted backend.\n\nThis request is intentionally a placeholder template. Replace all {{...}} values and execute only when creating a real, authorized record. Creating the first document creates the collection.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fields\": {\n    \"logid\": {\n      \"stringValue\": \"{{logid}}\"\n    },\n    \"description\": {\n      \"stringValue\": \"{{REPLACE_ME}}\"\n    }\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create template document - bank_settings",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{idToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{firestoreBaseUrl}}/bank_settings?documentId={{settingId}}",
+              "host": [
+                "{{firestoreBaseUrl}}"
+              ],
+              "path": [
+                "bank_settings"
+              ],
+              "query": [
+                {
+                  "key": "documentId",
+                  "value": "{{settingId}}"
+                }
+              ]
+            },
+            "description": "Evergreen agreed addition; confirm final setting fields as implementation requirements arise.\n\nThis request is intentionally a placeholder template. Replace all {{...}} values and execute only when creating a real, authorized record. Creating the first document creates the collection.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fields\": {\n    \"bankId\": {\n      \"stringValue\": \"P675\"\n    },\n    \"settingKey\": {\n      \"stringValue\": \"{{REPLACE_ME}}\"\n    },\n    \"settingValue\": {\n      \"stringValue\": \"{{REPLACE_ME}}\"\n    },\n    \"updatedBy\": {\n      \"stringValue\": \"{{adminUid}}\"\n    }\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create template document - request_nonces",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{idToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{firestoreBaseUrl}}/request_nonces?documentId={{nonceId}}",
+              "host": [
+                "{{firestoreBaseUrl}}"
+              ],
+              "path": [
+                "request_nonces"
+              ],
+              "query": [
+                {
+                  "key": "documentId",
+                  "value": "{{nonceId}}"
+                }
+              ]
+            },
+            "description": "Evergreen agreed addition; trusted backend only.\n\nThis request is intentionally a placeholder template. Replace all {{...}} values and execute only when creating a real, authorized record. Creating the first document creates the collection.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fields\": {\n    \"nonce\": {\n      \"stringValue\": \"{{REPLACE_ME}}\"\n    },\n    \"createdAt\": {\n      \"timestampValue\": \"2026-11-24T00:00:00Z\"\n    },\n    \"expiresAt\": {\n      \"timestampValue\": \"2026-11-24T00:05:00Z\"\n    },\n    \"used\": {\n      \"booleanValue\": false\n    }\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create template document - relationship_managers",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{idToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{firestoreBaseUrl}}/relationship_managers?documentId={{managerId}}",
+              "host": [
+                "{{firestoreBaseUrl}}"
+              ],
+              "path": [
+                "relationship_managers"
+              ],
+              "query": [
+                {
+                  "key": "documentId",
+                  "value": "{{managerId}}"
+                }
+              ]
+            },
+            "description": "Evergreen agreed addition; customer link can use relationshipManagerId.\n\nThis request is intentionally a placeholder template. Replace all {{...}} values and execute only when creating a real, authorized record. Creating the first document creates the collection.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fields\": {\n    \"managerId\": {\n      \"stringValue\": \"{{managerId}}\"\n    },\n    \"fullName\": {\n      \"stringValue\": \"{{REPLACE_ME}}\"\n    },\n    \"email\": {\n      \"stringValue\": \"{{REPLACE_ME}}\"\n    },\n    \"status\": {\n      \"stringValue\": \"ACTIVE\"\n    }\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get document - users",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{idToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{firestoreBaseUrl}}/users/{{uid}}",
+              "host": [
+                "{{firestoreBaseUrl}}"
+              ],
+              "path": [
+                "users",
+                "{{uid}}"
+              ]
+            },
+            "description": "Reads a document. With deny-all rules this direct user-token request is expected to be denied; use only after the trusted backend/security model is configured."
+          },
+          "response": []
+        },
+        {
+          "name": "Get document - sessions",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{idToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{firestoreBaseUrl}}/sessions/{{sessionHash}}",
+              "host": [
+                "{{firestoreBaseUrl}}"
+              ],
+              "path": [
+                "sessions",
+                "{{sessionHash}}"
+              ]
+            },
+            "description": "Reads a document. With deny-all rules this direct user-token request is expected to be denied; use only after the trusted backend/security model is configured."
+          },
+          "response": []
+        },
+        {
+          "name": "Get document - kyc_requests",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{idToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{firestoreBaseUrl}}/kyc_requests/{{requestId}}",
+              "host": [
+                "{{firestoreBaseUrl}}"
+              ],
+              "path": [
+                "kyc_requests",
+                "{{requestId}}"
+              ]
+            },
+            "description": "Reads a document. With deny-all rules this direct user-token request is expected to be denied; use only after the trusted backend/security model is configured."
+          },
+          "response": []
+        },
+        {
+          "name": "Get document - accounts",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{idToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{firestoreBaseUrl}}/accounts/{{accountId}}",
+              "host": [
+                "{{firestoreBaseUrl}}"
+              ],
+              "path": [
+                "accounts",
+                "{{accountId}}"
+              ]
+            },
+            "description": "Reads a document. With deny-all rules this direct user-token request is expected to be denied; use only after the trusted backend/security model is configured."
+          },
+          "response": []
+        },
+        {
+          "name": "Get document - beneficiaries",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{idToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{firestoreBaseUrl}}/beneficiaries/{{beneficiaryId}}",
+              "host": [
+                "{{firestoreBaseUrl}}"
+              ],
+              "path": [
+                "beneficiaries",
+                "{{beneficiaryId}}"
+              ]
+            },
+            "description": "Reads a document. With deny-all rules this direct user-token request is expected to be denied; use only after the trusted backend/security model is configured."
+          },
+          "response": []
+        },
+        {
+          "name": "Get document - transfers",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{idToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{firestoreBaseUrl}}/transfers/{{transferId}}",
+              "host": [
+                "{{firestoreBaseUrl}}"
+              ],
+              "path": [
+                "transfers",
+                "{{transferId}}"
+              ]
+            },
+            "description": "Reads a document. With deny-all rules this direct user-token request is expected to be denied; use only after the trusted backend/security model is configured."
+          },
+          "response": []
+        },
+        {
+          "name": "Get document - ledger_entries",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{idToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{firestoreBaseUrl}}/ledger_entries/{{entryId}}",
+              "host": [
+                "{{firestoreBaseUrl}}"
+              ],
+              "path": [
+                "ledger_entries",
+                "{{entryId}}"
+              ]
+            },
+            "description": "Reads a document. With deny-all rules this direct user-token request is expected to be denied; use only after the trusted backend/security model is configured."
+          },
+          "response": []
+        },
+        {
+          "name": "Get document - transfer_limits",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{idToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{firestoreBaseUrl}}/transfer_limits/{{accountId}}",
+              "host": [
+                "{{firestoreBaseUrl}}"
+              ],
+              "path": [
+                "transfer_limits",
+                "{{accountId}}"
+              ]
+            },
+            "description": "Reads a document. With deny-all rules this direct user-token request is expected to be denied; use only after the trusted backend/security model is configured."
+          },
+          "response": []
+        },
+        {
+          "name": "Get document - daily_usage",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{idToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{firestoreBaseUrl}}/daily_usage/{{accountId_date}}",
+              "host": [
+                "{{firestoreBaseUrl}}"
+              ],
+              "path": [
+                "daily_usage",
+                "{{accountId_date}}"
+              ]
+            },
+            "description": "Reads a document. With deny-all rules this direct user-token request is expected to be denied; use only after the trusted backend/security model is configured."
+          },
+          "response": []
+        },
+        {
+          "name": "Get document - idempotency_keys",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{idToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{firestoreBaseUrl}}/idempotency_keys/{{scopeKey}}",
+              "host": [
+                "{{firestoreBaseUrl}}"
+              ],
+              "path": [
+                "idempotency_keys",
+                "{{scopeKey}}"
+              ]
+            },
+            "description": "Reads a document. With deny-all rules this direct user-token request is expected to be denied; use only after the trusted backend/security model is configured."
+          },
+          "response": []
+        },
+        {
+          "name": "Get document - interbank_inbox",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{idToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{firestoreBaseUrl}}/interbank_inbox/{{sourceTransferId}}",
+              "host": [
+                "{{firestoreBaseUrl}}"
+              ],
+              "path": [
+                "interbank_inbox",
+                "{{sourceTransferId}}"
+              ]
+            },
+            "description": "Reads a document. With deny-all rules this direct user-token request is expected to be denied; use only after the trusted backend/security model is configured."
+          },
+          "response": []
+        },
+        {
+          "name": "Get document - loans",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{idToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{firestoreBaseUrl}}/loans/{{loanId}}",
+              "host": [
+                "{{firestoreBaseUrl}}"
+              ],
+              "path": [
+                "loans",
+                "{{loanId}}"
+              ]
+            },
+            "description": "Reads a document. With deny-all rules this direct user-token request is expected to be denied; use only after the trusted backend/security model is configured."
+          },
+          "response": []
+        },
+        {
+          "name": "Get document - portfolios",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{idToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{firestoreBaseUrl}}/portfolios/{{uid}}",
+              "host": [
+                "{{firestoreBaseUrl}}"
+              ],
+              "path": [
+                "portfolios",
+                "{{uid}}"
+              ]
+            },
+            "description": "Reads a document. With deny-all rules this direct user-token request is expected to be denied; use only after the trusted backend/security model is configured."
+          },
+          "response": []
+        },
+        {
+          "name": "Get document - notification_outbox",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{idToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{firestoreBaseUrl}}/notification_outbox/{{eventId}}",
+              "host": [
+                "{{firestoreBaseUrl}}"
+              ],
+              "path": [
+                "notification_outbox",
+                "{{eventId}}"
+              ]
+            },
+            "description": "Reads a document. With deny-all rules this direct user-token request is expected to be denied; use only after the trusted backend/security model is configured."
+          },
+          "response": []
+        },
+        {
+          "name": "Get document - audit_logs",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{idToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{firestoreBaseUrl}}/audit_logs/{{logid}}",
+              "host": [
+                "{{firestoreBaseUrl}}"
+              ],
+              "path": [
+                "audit_logs",
+                "{{logid}}"
+              ]
+            },
+            "description": "Reads a document. With deny-all rules this direct user-token request is expected to be denied; use only after the trusted backend/security model is configured."
+          },
+          "response": []
+        },
+        {
+          "name": "Get document - bank_settings",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{idToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{firestoreBaseUrl}}/bank_settings/{{settingId}}",
+              "host": [
+                "{{firestoreBaseUrl}}"
+              ],
+              "path": [
+                "bank_settings",
+                "{{settingId}}"
+              ]
+            },
+            "description": "Reads a document. With deny-all rules this direct user-token request is expected to be denied; use only after the trusted backend/security model is configured."
+          },
+          "response": []
+        },
+        {
+          "name": "Get document - request_nonces",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{idToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{firestoreBaseUrl}}/request_nonces/{{nonceId}}",
+              "host": [
+                "{{firestoreBaseUrl}}"
+              ],
+              "path": [
+                "request_nonces",
+                "{{nonceId}}"
+              ]
+            },
+            "description": "Reads a document. With deny-all rules this direct user-token request is expected to be denied; use only after the trusted backend/security model is configured."
+          },
+          "response": []
+        },
+        {
+          "name": "Get document - relationship_managers",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{idToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{firestoreBaseUrl}}/relationship_managers/{{managerId}}",
+              "host": [
+                "{{firestoreBaseUrl}}"
+              ],
+              "path": [
+                "relationship_managers",
+                "{{managerId}}"
+              ]
+            },
+            "description": "Reads a document. With deny-all rules this direct user-token request is expected to be denied; use only after the trusted backend/security model is configured."
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "apiKey",
+      "value": "REPLACE_WITH_FIREBASE_WEB_API_KEY"
+    },
+    {
+      "key": "projectId",
+      "value": "REPLACE_WITH_FIREBASE_PROJECT_ID"
+    },
+    {
+      "key": "email",
+      "value": "admin@evergreen.com"
+    },
+    {
+      "key": "password",
+      "value": "REPLACE_LOCALLY_NEVER_SHARE"
+    },
+    {
+      "key": "newCustomerEmail",
+      "value": "customer@example.com"
+    },
+    {
+      "key": "newCustomerPassword",
+      "value": "REPLACE_LOCALLY"
+    },
+    {
+      "key": "idToken",
+      "value": "REPLACE_AFTER_AUTH_SIGN_IN"
+    },
+    {
+      "key": "refreshToken",
+      "value": "REPLACE_AFTER_AUTH_SIGN_IN"
+    },
+    {
+      "key": "uid",
+      "value": "REPLACE_AFTER_AUTH_SIGN_IN"
+    },
+    {
+      "key": "firestoreBaseUrl",
+      "value": "https://firestore.googleapis.com/v1/projects/REPLACE_WITH_FIREBASE_PROJECT_ID/databases/(default)/documents"
+    }
+  ]
+}

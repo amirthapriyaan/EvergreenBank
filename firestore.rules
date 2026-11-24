@@ -1,0 +1,60 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() { return request.auth != null; }
+    function own(uid) { return signedIn() && request.auth.uid == uid; }
+    function admin() {
+      return signedIn() &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'ADMIN';
+    }
+    match /users/{uid} {
+      allow get: if own(uid) || admin();
+      allow list: if admin();
+      allow create: if own(uid) && request.resource.data.uid == uid &&
+        request.resource.data.role == 'CUSTOMER';
+      allow update: if admin();
+      allow delete: if false;
+    }
+    match /kyc_requests/{id} {
+      allow create: if signedIn() && request.resource.data.uid == request.auth.uid;
+      allow get, list: if admin() || (signedIn() && resource.data.uid == request.auth.uid);
+      allow update: if admin();
+      allow delete: if false;
+    }
+    match /accounts/{id} {
+      allow get, list: if admin() || (signedIn() && resource.data.customerUid == request.auth.uid);
+      allow create, update: if admin();
+      allow delete: if false;
+    }
+    match /beneficiaries/{id} {
+      allow get, list: if admin() || (signedIn() && resource.data.uid == request.auth.uid);
+      allow create: if signedIn() && request.resource.data.uid == request.auth.uid;
+      allow update, delete: if signedIn() && resource.data.uid == request.auth.uid;
+    }
+    match /transfers/{id} {
+      allow get, list: if admin() || (signedIn() && resource.data.requestedByUid == request.auth.uid);
+      allow create: if signedIn() && request.resource.data.requestedByUid == request.auth.uid;
+      allow update, delete: if false;
+    }
+    match /ledger_entries/{id} {
+      allow get, list: if admin() || (signedIn() &&
+        get(/databases/$(database)/documents/accounts/$(resource.data.accountId)).data.customerUid == request.auth.uid);
+      allow write: if admin();
+    }
+    match /transfer_limits/{id} { allow read: if signedIn(); allow write: if admin(); }
+    match /daily_usage/{id} { allow read: if admin() || (signedIn() && resource.data.uid == request.auth.uid); allow write: if admin(); }
+    match /idempotency_keys/{id} { allow read, write: if admin(); }
+    match /interbank_inbox/{id} { allow read, write: if admin(); }
+    match /loans/{id} {
+      allow get, list: if admin() || (signedIn() && resource.data.uid == request.auth.uid);
+      allow create: if signedIn() && request.resource.data.uid == request.auth.uid;
+      allow update, delete: if admin();
+    }
+    match /portfolios/{uid} { allow read: if own(uid) || admin(); allow write: if admin(); }
+    match /notification_outbox/{id} { allow read: if admin() || (signedIn() && resource.data.uid == request.auth.uid); allow write: if admin(); }
+    match /audit_logs/{id} { allow read, write: if admin(); }
+    match /bank_settings/{id} { allow read: if signedIn(); allow write: if admin(); }
+    match /request_nonces/{id} { allow read, write: if admin(); }
+    match /relationship_managers/{id} { allow read: if admin(); allow write: if admin(); }
+  }
+}
